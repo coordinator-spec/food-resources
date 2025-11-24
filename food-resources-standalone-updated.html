@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adams County Food Security Resources</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // Lucide icons as inline SVG components
+        const Search = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        );
+
+        const MapPin = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+        );
+
+        const Clock = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        );
+
+        const Phone = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+        );
+
+        const AlertCircle = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        );
+
+        const Package = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16.5 9.4 7.55 4.24"></path>
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+        );
+
+        const X = () => (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const TrendingDown = () => (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                <polyline points="17 18 23 18 23 12"></polyline>
+            </svg>
+        );
+
+        const Check = () => (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+
+        const FoodResourcesApp = () => {
+            const [searchTerm, setSearchTerm] = useState('');
+            const [filterDay, setFilterDay] = useState('all');
+            const [filterNeed, setFilterNeed] = useState('all');
+            const [showGapAnalysis, setShowGapAnalysis] = useState(false);
+            const [showNeedsReport, setShowNeedsReport] = useState(false);
+
+            // Your food resources data with inventory status
+            const resources = [
+                {
+                    id: 1,
+                    organization: "United Harvest",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "3rd Sat of the month, 9:45-11:30",
+                    phone: "402-462-5147",
+                    address: "614 N. Lincoln Ave, Hastings",
+                    contact: "",
+                    notes: "This is a drive-through distribution",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 2,
+                    organization: "Crossroads Mission Ave",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Mon-Sun 24/7",
+                    phone: "402-462-6460",
+                    address: "702 W 14th St, Hastings",
+                    contact: "",
+                    notes: "Meals or Food Box",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 3,
+                    organization: "Catholic Social Services of Southern Nebraska",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "M-F 12-4",
+                    phone: "402-463-2112",
+                    address: "333 W 2nd St, Hastings",
+                    contact: "",
+                    notes: "Sack lunches. Extra lunches can be requested on Thursdays and Fridays for the weekend",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 4,
+                    organization: "Salvation Army",
+                    qualifications: "None",
+                    needAppt: true,
+                    daysTime: "M-F 9-12, 1-5",
+                    phone: "402-463-0529",
+                    address: "400 S. Burlington Ave., Hastings",
+                    contact: "Josep Irvine",
+                    notes: "Food Box, prefer appointments, fill out an application, have some hot meal options",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 5,
+                    organization: "Community Action Partnership of Mid-Nebraska",
+                    qualifications: "60+",
+                    needAppt: true,
+                    daysTime: "M-F 8-4:30",
+                    phone: "402-463-7679",
+                    address: "2525 W 2nd St #110, Hastings",
+                    contact: "",
+                    notes: "Commodities for 60+",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 6,
+                    organization: "Adams Co. Senior Center",
+                    qualifications: "Seniors",
+                    needAppt: false,
+                    daysTime: "Call for information",
+                    phone: "402-460-1246",
+                    address: "2015 W 3rd St., Hastings",
+                    contact: "",
+                    notes: "Congregate and home delivery/Call for more information",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 7,
+                    organization: "YWCA Adams County",
+                    qualifications: "18 years and under",
+                    needAppt: false,
+                    daysTime: "4:30-5:30 M-F when The Zone is open",
+                    phone: "402-462-8821",
+                    address: "2525 West 2nd St, Ste. 110",
+                    contact: "Alicia O'Donnell, Mackenzie Reinbold",
+                    notes: "The meals must be consumed onsite. The Zone is not open on days when Hastings Public Schools does not have classes.",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 8,
+                    organization: "Oasis Church",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Every Saturday 12pm - 1pm",
+                    phone: "402-705-2035",
+                    address: "835 S. Burlington Avenue, Ste #111",
+                    contact: "",
+                    notes: "Sack lunches",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 9,
+                    organization: "Central Community College",
+                    qualifications: "College members",
+                    needAppt: true,
+                    daysTime: "Contact for availability",
+                    phone: "402-461-2424",
+                    address: "Dawson Building, Room 227 (Hastings)",
+                    contact: "Amber Dubois, Andrea Hays, Jennifer Arlt",
+                    notes: "Food and hygiene pantry. Please contact hasfoodpantry@cccneb.edu for more information.",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 10,
+                    organization: "Little Free Pantry - St. Mark's Episcopal",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Anytime",
+                    phone: "",
+                    address: "on 5th St., between Lincoln and Burlington",
+                    contact: "",
+                    notes: "24/7 access",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 11,
+                    organization: "Little Free Pantry - Residential",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Anytime",
+                    phone: "",
+                    address: "SE corner of 6th and California",
+                    contact: "",
+                    notes: "24/7 access",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 12,
+                    organization: "Little Free Pantry - Church of Christ",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Anytime",
+                    phone: "",
+                    address: "NW corner of Home and Laird",
+                    contact: "",
+                    notes: "24/7 access",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 13,
+                    organization: "Little Free Pantry - Residential",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Anytime",
+                    phone: "",
+                    address: "Corner of Forest and Pine",
+                    contact: "",
+                    notes: "24/7 access",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 14,
+                    organization: "Evangelical Free Church",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Monday 6-8 pm",
+                    phone: "",
+                    address: "2015 N St Joseph Ave",
+                    contact: "",
+                    notes: "Shutdown Community Supper",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 15,
+                    organization: "Peace Lutheran Church",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Tuesday 6-8pm",
+                    phone: "",
+                    address: "Corner of 9th and California",
+                    contact: "",
+                    notes: "Shutdown Community Supper",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 16,
+                    organization: "First United Methodist",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Wednesday 6-8pm",
+                    phone: "",
+                    address: "SE corner of 7th and Hastings, park in the back",
+                    contact: "",
+                    notes: "Shutdown Community Supper",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 17,
+                    organization: "First Presbyterian Church",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Thursday 6-8pm",
+                    phone: "",
+                    address: "7th and Lincoln - SW corner",
+                    contact: "",
+                    notes: "Shutdown Community Supper",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 18,
+                    organization: "First Christian Church",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Sunday 6-8 pm",
+                    phone: "",
+                    address: "1201 Sheridan Dr",
+                    contact: "",
+                    notes: "Shutdown Community Supper",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 19,
+                    organization: "St. Cecilia Catholic Church",
+                    qualifications: "None",
+                    needAppt: false,
+                    daysTime: "Friday 6-8 pm",
+                    phone: "",
+                    address: "301 W 7th St, Centennial Hall",
+                    contact: "",
+                    notes: "Shutdown Community Supper",
+                    inventory: {},
+                    lastUpdated: null
+                },
+                {
+                    id: 20,
+                    organization: "Crimson Cupboard - Hastings College",
+                    qualifications: "College students",
+                    needAppt: false,
+                    daysTime: "Contact for availability",
+                    phone: "",
+                    address: "Hastings College",
+                    contact: "",
+                    notes: "Food pantry for Hastings College students",
+                    inventory: {},
+                    lastUpdated: null
+                }
+            ];
+
+            // Inventory needs analysis
+            const inventoryNeeds = useMemo(() => {
+                const needs = {
+                    critical: [],
+                    urgent: [],
+                    monitoring: []
+                };
+
+                resources.forEach(resource => {
+                    Object.entries(resource.inventory).forEach(([item, status]) => {
+                        const need = {
+                            organization: resource.organization,
+                            item: item,
+                            status: status,
+                            phone: resource.phone,
+                            lastUpdated: resource.lastUpdated
+                        };
+
+                        if (status === 'out') {
+                            needs.critical.push(need);
+                        } else if (status === 'low') {
+                            needs.urgent.push(need);
+                        } else if (status === 'adequate') {
+                            needs.monitoring.push(need);
+                        }
+                    });
+                });
+
+                return needs;
+            }, []);
+
+            // Gap Analysis
+            const gapAnalysis = useMemo(() => {
+                const gaps = {
+                    timing: [],
+                    demographics: [],
+                    accessibility: [],
+                    inventory: []
+                };
+
+                const weekendOptions = resources.filter(r => 
+                    r.daysTime.toLowerCase().includes('sat') || 
+                    r.daysTime.toLowerCase().includes('sun') ||
+                    r.daysTime.toLowerCase().includes('24/7') ||
+                    r.organization.includes('Little Free Pantry')
+                );
+                
+                if (weekendOptions.length < 5) {
+                    gaps.timing.push({
+                        gap: "Limited Weekend Access",
+                        detail: `Only ${weekendOptions.length} resources available on weekends`,
+                        severity: "high"
+                    });
+                }
+
+                const eveningOptions = resources.filter(r => {
+                    const time = r.daysTime.toLowerCase();
+                    return time.includes('24/7') || 
+                           time.includes('6-8') || 
+                           time.includes('anytime') ||
+                           (time.includes('pm') && parseInt(time.match(/\d+/)?.[0] || 0) >= 6);
+                });
+
+                if (eveningOptions.length < 8) {
+                    gaps.timing.push({
+                        gap: "Limited Evening Hours",
+                        detail: `Only ${eveningOptions.length} resources available after 5pm (many community dinners currently shut down)`,
+                        severity: "medium"
+                    });
+                }
+
+                if (inventoryNeeds.critical.length > 0) {
+                    gaps.inventory.push({
+                        gap: "Critical Shortages",
+                        detail: `${inventoryNeeds.critical.length} items are completely out of stock across organizations`,
+                        severity: "high"
+                    });
+                }
+
+                if (inventoryNeeds.urgent.length > 0) {
+                    gaps.inventory.push({
+                        gap: "Low Stock Items",
+                        detail: `${inventoryNeeds.urgent.length} items are running low across organizations`,
+                        severity: "medium"
+                    });
+                }
+
+                const needsUpdate = resources.filter(r => !r.lastUpdated).length;
+                if (needsUpdate > 5) {
+                    gaps.inventory.push({
+                        gap: "Missing Inventory Data",
+                        detail: `${needsUpdate} organizations need to update their inventory status`,
+                        severity: "low"
+                    });
+                }
+
+                return gaps;
+            }, [inventoryNeeds]);
+
+            const filteredResources = useMemo(() => {
+                return resources.filter(resource => {
+                    const matchesSearch = searchTerm === '' || 
+                        resource.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        resource.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        resource.notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        resource.daysTime.toLowerCase().includes(searchTerm.toLowerCase());
+
+                    const matchesDay = filterDay === 'all' || 
+                        resource.daysTime.toLowerCase().includes(filterDay.toLowerCase());
+
+                    const matchesNeed = filterNeed === 'all' ||
+                        (filterNeed === 'critical' && Object.values(resource.inventory).includes('out')) ||
+                        (filterNeed === 'low' && Object.values(resource.inventory).includes('low')) ||
+                        (filterNeed === 'needs-update' && !resource.lastUpdated);
+
+                    return matchesSearch && matchesDay && matchesNeed;
+                });
+            }, [searchTerm, filterDay, filterNeed]);
+
+            const getStatusColor = (status) => {
+                switch(status) {
+                    case 'out': return 'text-red-600 bg-red-100';
+                    case 'low': return 'text-orange-600 bg-orange-100';
+                    case 'adequate': return 'text-green-600 bg-green-100';
+                    default: return 'text-gray-600 bg-gray-100';
+                }
+            };
+
+            const getStatusIcon = (status) => {
+                switch(status) {
+                    case 'out': return <X />;
+                    case 'low': return <TrendingDown />;
+                    case 'adequate': return <Check />;
+                    default: return null;
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-8">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Header */}
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                                Adams County Food Security Resources
+                            </h1>
+                            <p className="text-gray-600">
+                                Community food assistance resources with real-time inventory tracking
+                            </p>
+                            <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 text-sm">
+                                <p className="font-medium text-blue-800">For assistance navigating resources:</p>
+                                <p className="text-blue-700">Call Central Navigation at 402-461-8412</p>
+                            </div>
+                        </div>
+
+                        {/* Search and Filters */}
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="relative">
+                                    <div className="absolute left-3 top-3 text-gray-400">
+                                        <Search />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Search organizations..."
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <select
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={filterDay}
+                                        onChange={(e) => setFilterDay(e.target.value)}
+                                    >
+                                        <option value="all">All Days</option>
+                                        <option value="monday">Monday</option>
+                                        <option value="tuesday">Tuesday</option>
+                                        <option value="wednesday">Wednesday</option>
+                                        <option value="thursday">Thursday</option>
+                                        <option value="friday">Friday</option>
+                                        <option value="saturday">Saturday</option>
+                                        <option value="sunday">Sunday</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <select
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        value={filterNeed}
+                                        onChange={(e) => setFilterNeed(e.target.value)}
+                                    >
+                                        <option value="all">All Inventory Status</option>
+                                        <option value="critical">🚨 Critical Needs</option>
+                                        <option value="low">⚠️ Low Stock</option>
+                                        <option value="needs-update">📋 Needs Update</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 mt-4">
+                                <button
+                                    onClick={() => setShowGapAnalysis(!showGapAnalysis)}
+                                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                                >
+                                    <AlertCircle />
+                                    {showGapAnalysis ? 'Hide' : 'Show'} Gap Analysis
+                                </button>
+                                <button
+                                    onClick={() => setShowNeedsReport(!showNeedsReport)}
+                                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+                                >
+                                    <Package />
+                                    {showNeedsReport ? 'Hide' : 'Show'} Urgent Needs Report
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Urgent Needs Report */}
+                        {showNeedsReport && (
+                            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                                    Urgent Needs Report
+                                </h2>
+                                
+                                {inventoryNeeds.critical.length > 0 && (
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-semibold text-red-700 mb-3 flex items-center gap-2">
+                                            <X />
+                                            Critical - Out of Stock ({inventoryNeeds.critical.length})
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {inventoryNeeds.critical.map((need, idx) => (
+                                                <div key={idx} className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <p className="font-semibold text-gray-800">{need.organization}</p>
+                                                            <p className="text-sm text-gray-600">Needs: {need.item}</p>
+                                                            {need.phone && (
+                                                                <p className="text-sm text-blue-600">{need.phone}</p>
+                                                            )}
+                                                        </div>
+                                                        {need.lastUpdated && (
+                                                            <span className="text-xs text-gray-500">
+                                                                Updated: {need.lastUpdated}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {inventoryNeeds.urgent.length > 0 && (
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-semibold text-orange-700 mb-3 flex items-center gap-2">
+                                            <TrendingDown />
+                                            Urgent - Low Stock ({inventoryNeeds.urgent.length})
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {inventoryNeeds.urgent.map((need, idx) => (
+                                                <div key={idx} className="p-3 bg-orange-50 border-l-4 border-orange-500 rounded">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <p className="font-semibold text-gray-800">{need.organization}</p>
+                                                            <p className="text-sm text-gray-600">Running low: {need.item}</p>
+                                                            {need.phone && (
+                                                                <p className="text-sm text-blue-600">{need.phone}</p>
+                                                            )}
+                                                        </div>
+                                                        {need.lastUpdated && (
+                                                            <span className="text-xs text-gray-500">
+                                                                Updated: {need.lastUpdated}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {inventoryNeeds.critical.length === 0 && inventoryNeeds.urgent.length === 0 && (
+                                    <p className="text-gray-600">No critical or urgent needs reported at this time.</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Gap Analysis */}
+                        {showGapAnalysis && (
+                            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                                    Service Gap Analysis
+                                </h2>
+                                
+                                {Object.entries(gapAnalysis).map(([category, gaps]) => (
+                                    gaps.length > 0 && (
+                                        <div key={category} className="mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-700 mb-3 capitalize">
+                                                {category} Gaps
+                                            </h3>
+                                            <div className="space-y-3">
+                                                {gaps.map((gap, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className={`p-4 rounded-lg border-l-4 ${
+                                                            gap.severity === 'high'
+                                                                ? 'bg-red-50 border-red-500'
+                                                                : gap.severity === 'medium'
+                                                                ? 'bg-yellow-50 border-yellow-500'
+                                                                : 'bg-blue-50 border-blue-500'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-start justify-between">
+                                                            <div>
+                                                                <p className="font-semibold text-gray-800">{gap.gap}</p>
+                                                                <p className="text-sm text-gray-600 mt-1">{gap.detail}</p>
+                                                            </div>
+                                                            <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                                                gap.severity === 'high'
+                                                                    ? 'bg-red-100 text-red-800'
+                                                                    : gap.severity === 'medium'
+                                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                                    : 'bg-blue-100 text-blue-800'
+                                                            }`}>
+                                                                {gap.severity}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Results Count */}
+                        <div className="mb-4 text-gray-600">
+                            Showing {filteredResources.length} of {resources.length} resources
+                        </div>
+
+                        {/* Resource Cards */}
+                        <div className="space-y-4">
+                            {filteredResources.map((resource) => (
+                                <div
+                                    key={resource.id}
+                                    className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                                >
+                                    <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <h3 className="text-xl font-bold text-gray-800">
+                                                    {resource.organization}
+                                                </h3>
+                                                {resource.lastUpdated && (
+                                                    <span className="text-xs text-gray-500 ml-2">
+                                                        Inventory updated: {resource.lastUpdated}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="space-y-2 text-gray-600">
+                                                <div className="flex items-start gap-2">
+                                                    <div className="mt-1"><Clock /></div>
+                                                    <span>{resource.daysTime}</span>
+                                                </div>
+                                                
+                                                {resource.phone && (
+                                                    <div className="flex items-center gap-2">
+                                                        <Phone />
+                                                        <a href={`tel:${resource.phone}`} className="hover:underline">
+                                                            {resource.phone}
+                                                        </a>
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="flex items-start gap-2">
+                                                    <div className="mt-1"><MapPin /></div>
+                                                    <span>{resource.address}</span>
+                                                </div>
+
+                                                {resource.contact && (
+                                                    <div className="text-sm">
+                                                        <span className="font-medium">Contact:</span> {resource.contact}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Inventory Status */}
+                                            {Object.keys(resource.inventory).length > 0 && (
+                                                <div className="mt-4">
+                                                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                                                        <Package />
+                                                        Current Inventory Status
+                                                    </h4>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {Object.entries(resource.inventory).map(([item, status]) => (
+                                                            <span
+                                                                key={item}
+                                                                className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(status)}`}
+                                                            >
+                                                                {getStatusIcon(status)}
+                                                                {item}: {status}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="lg:w-1/3 space-y-3">
+                                            {resource.qualifications && resource.qualifications !== "None" && (
+                                                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                                    <p className="text-sm font-medium text-purple-900">Qualifications</p>
+                                                    <p className="text-sm text-purple-700">{resource.qualifications}</p>
+                                                </div>
+                                            )}
+                                            
+                                            {resource.needAppt && (
+                                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                                    <p className="text-sm font-medium text-orange-900">
+                                                        ⚠️ Appointment Required
+                                                    </p>
+                                                </div>
+                                            )}
+                                            
+                                            {resource.notes && (
+                                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                                    <p className="text-sm text-gray-700">{resource.notes}</p>
+                                                </div>
+                                            )}
+
+                                            {!resource.lastUpdated && (
+                                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                                    <p className="text-sm font-medium text-yellow-900">
+                                                        📋 Inventory status not yet reported
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-3">Inventory Status Legend</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600 flex items-center gap-1">
+                                        <X />
+                                        Out
+                                    </span>
+                                    <span className="text-sm text-gray-600">Urgent donations needed</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600 flex items-center gap-1">
+                                        <TrendingDown />
+                                        Low
+                                    </span>
+                                    <span className="text-sm text-gray-600">Running low, donations welcome</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600 flex items-center gap-1">
+                                        <Check />
+                                        Adequate
+                                    </span>
+                                    <span className="text-sm text-gray-600">Well-stocked at this time</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="mt-8 bg-white rounded-lg shadow-md p-6 text-center text-gray-600">
+                            <p className="mb-2 font-medium">
+                                Organizations: Update your inventory status to help coordinate donations
+                            </p>
+                            <p className="mb-2">
+                                Contact United Way at 402-461-8412 or{' '}
+                                <a href="mailto:navigator3@unitedwayscne.org" className="text-blue-600 hover:underline">
+                                    navigator3@unitedwayscne.org
+                                </a>
+                            </p>
+                            <p className="text-sm text-gray-500">
+                                Last updated: November 2024
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<FoodResourcesApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
